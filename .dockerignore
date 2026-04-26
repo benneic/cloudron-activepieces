@@ -1,0 +1,13 @@
+.git
+.github
+node_modules
+*.md
+!README.md
+.agents
+.cursor
+LICENSE
+CloudronVersions.json
+skills-lock.json
+package.json
+package-lock.json
+scripts

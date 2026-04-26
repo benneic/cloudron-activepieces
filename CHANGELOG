@@ -1,0 +1,4 @@
+[0.82.1]
+* Initial public packaging for Cloudron: PostgreSQL (vector), Redis, localstorage, sendmail addons; `start.sh` maps `CLOUDRON_*` to Activepieces env; upstream 0.82.1.
+* Health check: `GET /api/v1/health`.
+* Execution: `UNSANDBOXED` (required for typical Cloudron container permissions); see README.

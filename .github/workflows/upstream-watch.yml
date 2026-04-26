@@ -1,0 +1,100 @@
+# Weekly: if activepieces/activepieces has a new release, open a PR bumping this package.
+name: Upstream release watch
+
+on:
+  schedule:
+    - cron: "0 6 * * 1" # Monday 06:00 UTC
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get latest Activepieces version
+        id: meta
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -eux
+          JSON=$(curl -sSL -H "Authorization: Bearer ${GH_TOKEN}" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/activepieces/activepieces/releases/latest")
+          TAG=$(echo "$JSON" | jq -r .tag_name)
+          U="${TAG#v}"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "upstream=$U" >> "$GITHUB_OUTPUT"
+          echo "relurl=$(echo "$JSON" | jq -r .html_url)" >> "$GITHUB_OUTPUT"
+
+      - name: Decide whether to open a PR
+        id: want
+        run: |
+          set -eux
+          UP="${{ steps.meta.outputs.upstream }}"
+          CUR_D=$(sed -n 's/^ARG AP_VERSION=//p' Dockerfile | head -1)
+          CUR_M=$(jq -r .version CloudronManifest.json)
+          if [ -z "$CUR_D" ] || [ -z "$CUR_M" ]; then
+            echo "Could not read versions" >&2; exit 1
+          fi
+          if [ "$CUR_D" != "$CUR_M" ]; then
+            echo "Dockerfile vs CloudronManifest.json: $CUR_D != $CUR_M" >&2
+            exit 1
+          fi
+          if [ "$UP" = "$CUR_D" ]; then
+            echo "should_bump=0" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if ! dpkg --compare-versions "$UP" "gt" "$CUR_D" 2>/dev/null; then
+            echo "should_bump=0" >> "$GITHUB_OUTPUT"
+            echo "Not newer: upstream=$UP current=$CUR_D" >&2
+            exit 0
+          fi
+          echo "should_bump=1" >> "$GITHUB_OUTPUT"
+
+      - name: See if a bump PR is already open
+        id: dupe
+        if: steps.want.outputs.should_bump == '1'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          U="${{ steps.meta.outputs.upstream }}"
+          h=$(gh pr list --head "bump/upstream-$U" --state open --json number -q 'length')
+          echo "open_count=$h" >> "$GITHUB_OUTPUT"
+
+      - name: Apply version bump
+        if: steps.want.outputs.should_bump == '1' && steps.dupe.outputs.open_count == '0'
+        run: |
+          set -eux
+          U="${{ steps.meta.outputs.upstream }}"
+          RELURL="${{ steps.meta.outputs.relurl }}"
+          sed -i "s/^ARG AP_VERSION=.*/ARG AP_VERSION=${U}/" Dockerfile
+          tmp=$(mktemp)
+          jq --arg v "$U" '.version = $v | .upstreamVersion = $v' CloudronManifest.json > "$tmp" && mv "$tmp" CloudronManifest.json
+          ctmp=$(mktemp)
+          {
+            echo "[$U]"
+            echo "* Bump [Activepieces $U]($RELURL)."
+            echo
+            cat CHANGELOG
+          } > "$ctmp" && mv "$ctmp" CHANGELOG
+
+      - name: Open pull request
+        if: steps.want.outputs.should_bump == '1' && steps.dupe.outputs.open_count == '0'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: bump Activepieces to ${{ steps.meta.outputs.upstream }}"
+          branch: bump/upstream-${{ steps.meta.outputs.upstream }}
+          delete-branch: true
+          title: "chore: bump Activepieces to ${{ steps.meta.outputs.upstream }}"
+          body: |
+            Automated version bump to match the latest [Activepieces](https://github.com/activepieces/activepieces) release.
+
+            **After merge**
+            - Create a git tag `v${{ steps.meta.outputs.upstream }}` to run the [release build workflow](.github/workflows/build.yml) and push the image.
+
+            **Upstream** — [${{ steps.meta.outputs.tag }}](${{ steps.meta.outputs.relurl }})

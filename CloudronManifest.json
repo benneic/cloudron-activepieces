@@ -1,0 +1,38 @@
+{
+  "id": "com.activepieces.cloudronapp",
+  "title": "Activepieces",
+  "author": "Activepieces (upstream) <hello@activepieces.com>",
+  "tagline": "Open source workflow automation — packaged for Cloudron",
+  "version": "0.82.1",
+  "upstreamVersion": "0.82.1",
+  "description": "file://DESCRIPTION.md",
+  "changelog": "file://CHANGELOG",
+  "postInstallMessage": "file://POSTINSTALL.md",
+  "icon": "file://icon.png",
+  "iconUrl": "https://avatars.githubusercontent.com/u/99494700?s=256&v=4",
+  "website": "https://www.activepieces.com/",
+  "documentationUrl": "https://www.activepieces.com/docs",
+  "contactEmail": "change-me@example.com",
+  "configurePath": "/",
+  "packagerName": "Activepieces (Cloudron package) by @benneic",
+  "packagerUrl": "https://github.com/benneic",
+  "tags": [
+    "project",
+    "sync",
+    "hosting"
+  ],
+  "mediaLinks": [
+    "https://avatars.githubusercontent.com/u/99494700?s=400&v=4"
+  ],
+  "healthCheckPath": "/api/v1/health",
+  "httpPort": 8000,
+  "minBoxVersion": "9.1.0",
+  "memoryLimit": 2147483648,
+  "manifestVersion": 2,
+  "addons": {
+    "localstorage": {},
+    "postgresql": {},
+    "redis": {},
+    "sendmail": {}
+  }
+}

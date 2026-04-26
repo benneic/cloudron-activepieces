@@ -1,0 +1,9 @@
+{
+  "name": "activepieces-cloudron",
+  "private": true,
+  "type": "module",
+  "description": "Cloudron packaging for Activepieces (automation only — app runs in Cloudron, not from npm).",
+  "devDependencies": {
+    "@cloudron/manifest-format": "^6.1.0"
+  }
+}

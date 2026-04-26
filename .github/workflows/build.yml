@@ -1,0 +1,119 @@
+# On tag vX.Y.Z: build, push the image, append CloudronVersions.json, open a PR to main.
+name: Release build
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      ap_version:
+        description: "Must match CloudronManifest.json and Dockerfile on this ref"
+        required: true
+        type: string
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Version from tag or input
+        id: ver
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "ver=${{ inputs.ap_version }}" >> "$GITHUB_OUTPUT"
+          else
+            REFNAME="${{ github.ref_name }}"
+            V="${REFNAME#v}"
+            echo "ver=$V" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Verify manifest matches
+        run: |
+          M=$(jq -r .version CloudronManifest.json)
+          D=$(sed -n 's/^ARG AP_VERSION=//p' Dockerfile | head -1)
+          V="${{ steps.ver.outputs.ver }}"
+          if [ "$M" != "$V" ] || [ "$D" != "$V" ]; then
+            echo "Version $V != CloudronManifest ($M) or Dockerfile ($D)" >&2
+            exit 1
+          fi
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Image reference
+        id: im
+        run: |
+          o=$(echo "${GITHUB_REPOSITORY_OWNER}" | tr "[:upper:]" "[:lower:]")
+          echo "name=${{ env.REGISTRY }}/${o}/activepieces-cloudron:${{ steps.ver.outputs.ver }}" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          build-args: |
+            AP_VERSION=${{ steps.ver.outputs.ver }}
+          tags: ${{ steps.im.outputs.name }}
+
+      - name: Set up Node
+        if: github.event_name == 'push'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install npm dependencies
+        if: github.event_name == 'push'
+        run: npm ci
+
+      - name: Update CloudronVersions (publish script)
+        if: github.event_name == 'push'
+        run: node scripts/publish-version.mjs "${{ steps.im.outputs.name }}"
+
+      - name: Open PR with catalog only
+        if: github.event_name == 'push'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          base: ${{ github.event.repository.default_branch }}
+          add-paths: |
+            CloudronVersions.json
+          branch: "catalog/v${{ steps.ver.outputs.ver }}"
+          delete-branch: true
+          title: "chore(versions): publish v${{ steps.ver.outputs.ver }} in Cloudron catalog"
+          body: |
+            Pushed: `${{ steps.im.outputs.name }}`
+
+            Merge this PR to update `CloudronVersions.json` on the default branch so users can install the version from a raw GitHub URL.
+
+            ```bash
+            cloudron install --image ${{ steps.im.outputs.name }}
+            ```
+            or after merge, using your hosted `CloudronVersions.json`.
+          commit-message: "chore(versions): publish v${{ steps.ver.outputs.ver }}"
+
+      - name: workflow_dispatch done
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          echo "Pushed: ${{ steps.im.outputs.name }}"
