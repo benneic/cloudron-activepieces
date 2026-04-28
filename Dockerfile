@@ -11,8 +11,10 @@ LABEL org.opencontainers.image.title="Activepieces (Cloudron)"
 LABEL org.opencontainers.image.version="${AP_VERSION}"
 LABEL org.opencontainers.image.source="https://github.com/activepieces/activepieces"
 
-# Match upstream: Node 24.14, deps for engine/pieces, psql for pgvector bootstrap
+# Match upstream: Node 24, deps for engine/pieces, psql for pgvector bootstrap.
+# Force /usr/bin first for this RUN so `npm`/`node` are Node 24, not base image’s Node 22.
 RUN set -eux; \
+  export PATH="/usr/bin:/usr/local/bin:${PATH}"; \
   apt-get update; \
   apt-get install -y --no-install-recommends \
     ca-certificates curl gnupg postgresql-client \
@@ -21,6 +23,7 @@ RUN set -eux; \
     libcap-dev \
   && curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
   && apt-get install -y --no-install-recommends nodejs \
+  && node -e "if(+process.versions.node.split('.')[0]<24) process.exit(1)" \
   && rm -rf /var/lib/apt/lists/*
 
 # Bun (used by some upstream tooling) — keep binary from upstream image
@@ -42,7 +45,8 @@ RUN set -eux; \
   mkdir -p /app/data/cache; \
   ln -s /app/data/cache /usr/src/app/cache
 
-RUN npm install -g --no-fund --no-audit pm2@6.0.10
+RUN export PATH="/usr/bin:/usr/local/bin:${PATH}" && node -v && which npm && \
+  npm install -g --no-fund --no-audit pm2@6.0.10
 
 RUN mkdir -p /app/code
 

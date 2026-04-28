@@ -1,9 +1,17 @@
 #!/bin/bash
 set -euo pipefail
 
+# cloudron/base prepends a bundled Node 22 under /usr/local/node-*/bin. This package also installs
+# Node 24 from NodeSource. Activepieces 0.82+ must run on Node 24+ (e.g. node:zlib zstd*); on Node 22
+# zstd* exports are missing and the API crashes at load: promisify(undefined) in file-compressor.ts.
+export PATH="/usr/bin:/usr/local/bin:/bin:/usr/sbin:/sbin${PATH:+:$PATH}"
+
 # Writable paths (localstorage; Cloudron base convention)
-mkdir -p /app/data/cache /app/data/config /run/activepieces
-chown -R cloudron:cloudron /app/data /run/activepieces
+# PM2 defaults to ~/.pm2; /home is read-only in Cloudron app containers, so the process
+# would crash with EROFS and nothing listens on httpPort (health check -> ECONNREFUSED).
+export PM2_HOME="${PM2_HOME:-/run/pm2}"
+mkdir -p /app/data/cache /app/data/config /run/activepieces "$PM2_HOME"
+chown -R cloudron:cloudron /app/data /run/activepieces "$PM2_HOME"
 
 # Public URL: Cloudron provides origin for redirects and webhooks
 if [ -n "${CLOUDRON_APP_ORIGIN:-}" ]; then

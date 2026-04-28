@@ -17,22 +17,48 @@ Unofficial [Cloudron](https://www.cloudron.io/) packaging for [Activepieces](htt
 
 ## Install
 
-### From a `CloudronVersions.json` URL (after you publish one)
+These steps assume a **from-source** install: you have [Docker](https://docs.docker.com/get-docker/) on your machine, the [Cloudron CLI](https://www.npmjs.com/package/cloudron) installed (`npm install -g cloudron`) and are logged in (`cloudron login <your-box>`) so the CLI can talk to your server. The build runs on your computer and the image is sent to the server; nothing is required to be published to a public registry.
 
-1. Host `CloudronVersions.json` at a public URL (e.g. raw file on this repo’s `main` branch after you merge a [release PR](.github/workflows/build.yml)).
-2. In the Cloudron dashboard: **App Store → community apps** (or **Settings → custom apps**), add that URL, or from a machine with the [CLI](https://docs.cloudron.io/packaging/cli/):
+1. **Clone** this repository:
 
    ```bash
-   cloudron install --versions-url "https://raw.githubusercontent.com/OWNER/REPO/main/CloudronVersions.json"
+   git clone <your-fork-or-upstream-url> activepieces-cloudron
+   cd activepieces-cloudron
    ```
 
-### From a pre-built image (no version catalog)
+2. **Build the image** without pushing to a registry (on first run the CLI may ask for a project name; it is only used to label the build):
 
-```bash
-cloudron install --image ghcr.io/OWNER/activepieces-cloudron:0.82.1
-```
+   ```bash
+   cloudron build --no-push
+   ```
 
-(Use the image your CI pushed; see [.github/workflows/build.yml](.github/workflows/build.yml).)
+3. **Install** the app on your Cloudron (from the same directory, with `CloudronManifest.json` present). Pick location, domain, and addons in the wizard as usual:
+
+   ```bash
+   cloudron install
+   ```
+
+### Update
+
+After new commits (for example a bump to `AP_VERSION` in the `Dockerfile` and `version` in `CloudronManifest.json`):
+
+1. **Pull** the latest `main` (or your release branch).
+
+   ```bash
+   git pull
+   ```
+
+2. **Rebuild** the image, still without pushing a registry build:
+
+   ```bash
+   cloudron build --no-push
+   ```
+
+3. **Update** the already-installed app to use the new image the CLI just built:
+
+   ```bash
+   cloudron update
+   ```
 
 ## First run and security
 
@@ -64,7 +90,8 @@ Useful flags:
 ## Backups and updates
 
 - Cloudron [backups](https://docs.cloudron.io/backups/) include the PostgreSQL and Redis **addons** and the **local storage** volume, so your DB, queue state, and `/app/data` stay consistent with restores.
-- **Application updates:** merge upstream-bump PRs from [.github/workflows/upstream-watch.yml](.github/workflows/upstream-watch.yml), then tag `vX.Y.Z` to run the [release build](.github/workflows/build.yml), merge the generated catalog PR, and push. End-users with your `CloudronVersions.json` URL will see the new line after you publish.
+- For **rebuilding and shipping a new version of this package**, use the [Install / Update](#install) flow (`git pull`, `cloudron build --no-push`, `cloudron update`) after you have aligned `Dockerfile` and `CloudronManifest.json` with the Activepieces version you want.
+- Optional: this repo also includes [GitHub Actions](.github/workflows/) for catalog publishing (`CloudronVersions.json` + registry images) if you prefer that model instead of a local `cloudron build` workflow.
 
 ## Automation in this repo
 
@@ -86,6 +113,7 @@ node scripts/publish-version.mjs 'YOUR_REGISTRY/activepieces:0.82.1'
 | Unhealthy in dashboard | `cloudron logs --app <fqdn> -f`; the manifest `healthCheckPath` is `/api/v1/health` (2xx = healthy). |
 | DB / migrations | `cloudron exec --app <fqdn> -- bash -c 'psql "..."'` using addon vars from `printenv \| grep POSTGRES` |
 | pgvector errors | `CREATE EXTENSION vector` is run in `start.sh`; ensure the postgres addon is provisioned. |
+| `promisify(undefined)` / `file-compressor.ts` / `ERR_INVALID_ARG_TYPE` | The app must run on **Node 24+** (see `start.sh` `PATH` and the Dockerfile). `cloudron/base` ships Node 22 first on `PATH`; this package prepends the distro Node from NodeSource. Rebuild and update. |
 
 ## Smoke testing
 
