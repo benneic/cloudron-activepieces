@@ -29,6 +29,9 @@ jobs:
       packages: write
     steps:
       - uses: actions/checkout@v6
+        with:
+          # Avoid duplicate Authorization on git https (checkout + create-pull-request) → 400
+          persist-credentials: false
 
       - name: Version from tag or input
         id: ver
