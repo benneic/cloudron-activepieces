@@ -15,7 +15,7 @@
   "contactEmail": "change-me@example.com",
   "configurePath": "/",
   "packagerName": "Activepieces (Cloudron package) by @benneic",
-  "packagerUrl": "https://github.com/benneic",
+  "packagerUrl": "https://github.com/benneic/cloudron-activepieces",
   "tags": [
     "project",
     "sync",

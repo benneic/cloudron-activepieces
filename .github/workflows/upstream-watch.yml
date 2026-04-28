@@ -10,11 +10,15 @@ permissions:
   contents: write
   pull-requests: write
 
+# Opt into Node 24 for composite JS actions (see GitHub Actions runner changelog, 2025–2026).
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Get latest Activepieces version
         id: meta

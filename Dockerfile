@@ -6,7 +6,6 @@ FROM ghcr.io/activepieces/activepieces:${AP_VERSION} AS upstream
 
 FROM cloudron/base:5.0.0@sha256:04fd70dbd8ad6149c19de39e35718e024417c3e01dc9c6637eaf4a41ec4e596c
 
-ARG AP_VERSION=0.82.1
 LABEL org.opencontainers.image.title="Activepieces (Cloudron)"
 LABEL org.opencontainers.image.version="${AP_VERSION}"
 LABEL org.opencontainers.image.source="https://github.com/activepieces/activepieces"
