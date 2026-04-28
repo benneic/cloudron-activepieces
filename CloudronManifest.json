@@ -22,7 +22,9 @@
     "hosting"
   ],
   "mediaLinks": [
-    "https://avatars.githubusercontent.com/u/99494700?s=400&v=4"
+    "https://raw.githubusercontent.com/benneic/cloudron-activepieces/main/assets/activepieces-screen-shot-1.png",
+    "https://raw.githubusercontent.com/benneic/cloudron-activepieces/main/assets/activepieces-screen-shot-2.png",
+    "https://raw.githubusercontent.com/benneic/cloudron-activepieces/main/assets/activepieces-screen-shot-3.png"
   ],
   "healthCheckPath": "/api/v1/health",
   "httpPort": 8000,

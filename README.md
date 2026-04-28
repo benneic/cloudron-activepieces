@@ -17,7 +17,29 @@ Unofficial [Cloudron](https://www.cloudron.io/) packaging for [Activepieces](htt
 
 ## Install
 
-These steps assume a **from-source** install: you have [Docker](https://docs.docker.com/get-docker/) on your machine, the [Cloudron CLI](https://www.npmjs.com/package/cloudron) installed (`npm install -g cloudron`) and are logged in (`cloudron login <your-box>`) so the CLI can talk to your server. The build runs on your computer and the image is sent to the server; nothing is required to be published to a public registry.
+### End users (recommended): install from published `CloudronVersions.json`
+
+The package is published through a version catalog file:
+
+- Catalog URL: `https://raw.githubusercontent.com/benneic/cloudron-activepieces/main/CloudronVersions.json`
+
+Choose one install path:
+
+1. **Cloudron dashboard (Community Apps)**
+   - Open Cloudron dashboard as admin.
+   - Go to **App Store** -> **Community Apps**.
+   - Add the catalog URL above.
+   - Install **Activepieces** from the community list.
+
+2. **Cloudron CLI**
+
+   ```bash
+   cloudron install --versions-url https://raw.githubusercontent.com/benneic/cloudron-activepieces/main/CloudronVersions.json
+   ```
+
+### Maintainers / developers: build from source
+
+Use this flow only if you are developing this package locally.
 
 1. **Clone** this repository:
 
@@ -90,6 +112,7 @@ Useful flags:
 ## Backups and updates
 
 - Cloudron [backups](https://docs.cloudron.io/backups/) include the PostgreSQL and Redis **addons** and the **local storage** volume, so your DB, queue state, and `/app/data` stay consistent with restores.
+- If you installed from the community catalog URL, update from the Cloudron dashboard once a newer catalog version is available.
 - For **rebuilding and shipping a new version of this package**, use the [Install / Update](#install) flow (`git pull`, `cloudron build --no-push`, `cloudron update`) after you have aligned `Dockerfile` and `CloudronManifest.json` with the Activepieces version you want.
 - Optional: this repo also includes [GitHub Actions](.github/workflows/) for catalog publishing (`CloudronVersions.json` + registry images) if you prefer that model instead of a local `cloudron build` workflow.
 
