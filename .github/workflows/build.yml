@@ -99,7 +99,10 @@ jobs:
         if: github.event_name == 'push'
         uses: peter-evans/create-pull-request@v6
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          # Needs repo Actions → General → workflow permissions: allow creating PRs (and
+          # read/write token default). Optional CATALOG_PR_TOKEN (classic `repo` PAT) if
+          # `GITHUB_TOKEN` is blocked by policy.
+          token: ${{ secrets.CATALOG_PR_TOKEN || github.token }}
           base: ${{ github.event.repository.default_branch }}
           add-paths: |
             CloudronVersions.json
