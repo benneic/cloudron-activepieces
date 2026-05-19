@@ -1,4 +1,4 @@
-# On tag vX.Y.Z: build, push the image, append CloudronVersions.json, open a PR to main.
+# On tag vX.Y.Z: build, push the image, append CloudronVersions.json on main.
 name: Release build
 
 on:
@@ -25,13 +25,11 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      pull-requests: write
       packages: write
     steps:
       - uses: actions/checkout@v6
         with:
-          # Avoid duplicate Authorization on git https (checkout + create-pull-request) → 400
-          persist-credentials: false
+          ref: ${{ github.ref }}
 
       - name: Version from tag or input
         id: ver
@@ -80,45 +78,37 @@ jobs:
             AP_VERSION=${{ steps.ver.outputs.ver }}
           tags: ${{ steps.im.outputs.name }}
 
-      - name: Set up Node
+      - uses: actions/checkout@v6
         if: github.event_name == 'push'
-        uses: actions/setup-node@v6
         with:
-          node-version: "24"
-          cache: "npm"
+          ref: main
+          path: main
 
-      - name: Install npm dependencies
+      - name: Publish catalog on main
         if: github.event_name == 'push'
-        run: npm ci
+        working-directory: main
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -eux
+          VER="${{ steps.ver.outputs.ver }}"
+          IMAGE="${{ steps.im.outputs.name }}"
 
-      - name: Update CloudronVersions (publish script)
-        if: github.event_name == 'push'
-        run: node scripts/publish-version.mjs "${{ steps.im.outputs.name }}"
+          if jq -e ".versions[\"${VER}\"]" CloudronVersions.json >/dev/null; then
+            echo "Version ${VER} already in CloudronVersions.json on main"
+            exit 0
+          fi
 
-      - name: Open PR with catalog only
-        if: github.event_name == 'push'
-        uses: peter-evans/create-pull-request@v8
-        with:
-          # Needs repo Actions → General → workflow permissions: allow creating PRs (and
-          # read/write token default). Optional CATALOG_PR_TOKEN (classic `repo` PAT) if
-          # `GITHUB_TOKEN` is blocked by policy.
-          token: ${{ secrets.CATALOG_PR_TOKEN || github.token }}
-          base: ${{ github.event.repository.default_branch }}
-          add-paths: |
-            CloudronVersions.json
-          branch: "catalog/v${{ steps.ver.outputs.ver }}"
-          delete-branch: true
-          title: "chore(versions): publish v${{ steps.ver.outputs.ver }} in Cloudron catalog"
-          body: |
-            Pushed: `${{ steps.im.outputs.name }}`
+          npm ci
+          node scripts/publish-version.mjs "${IMAGE}"
 
-            Merge this PR to update `CloudronVersions.json` on the default branch so users can install the version from a raw GitHub URL.
-
-            ```bash
-            cloudron install --image ${{ steps.im.outputs.name }}
-            ```
-            or after merge, using your hosted `CloudronVersions.json`.
-          commit-message: "chore(versions): publish v${{ steps.ver.outputs.ver }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git add CloudronVersions.json
+          git commit -m "chore(versions): publish v${VER} in Cloudron catalog"
+          git push origin main
+          echo "Published ${VER} -> ${IMAGE}"
 
       - name: workflow_dispatch done
         if: github.event_name == 'workflow_dispatch'

@@ -118,8 +118,22 @@ Useful flags:
 
 ## Automation in this repo
 
-1. **Upstream watch (weekly / manual)** — [upstream-watch.yml](.github/workflows/upstream-watch.yml) opens a PR when [activepieces/activepieces](https://github.com/activepieces/activepieces) has a *newer semver* than `Dockerfile` + `CloudronManifest.json`.
-2. **Release build (on tag `v*.*.*`)** — [build.yml](.github/workflows/build.yml) builds and pushes `ghcr.io/…/activepieces-cloudron:<ver>`, runs `node scripts/publish-version.mjs`, and opens a PR that only updates [CloudronVersions.json](CloudronVersions.json) for the catalog.
+Fully automated release pipeline (no manual PRs or tags):
+
+1. **Upstream watch (weekly / manual)** — [upstream-watch.yml](.github/workflows/upstream-watch.yml) checks [activepieces/activepieces](https://github.com/activepieces/activepieces) for a newer semver. When found it commits the bump to `main`, pushes tag `vX.Y.Z`, and triggers the release build. If the bump is already on `main` but the tag is missing, it creates the tag only.
+2. **Release build (on tag `v*.*.*`)** — [build.yml](.github/workflows/build.yml) builds and pushes `ghcr.io/…/activepieces-cloudron:<ver>`, then commits the new entry to [CloudronVersions.json](CloudronVersions.json) on `main`.
+
+**Requirements:** In GitHub → Settings → Actions → General, set workflow permissions to **Read and write**. If `main` has branch protection, allow `github-actions[bot]` to bypass or push directly.
+
+**Manual release** (without waiting for upstream watch):
+
+```bash
+# After aligning Dockerfile + CloudronManifest.json on main:
+git tag -a vX.Y.Z -m "Release Activepieces X.Y.Z for Cloudron"
+git push origin vX.Y.Z
+```
+
+Or use **Actions → Release build → Run workflow** with an `ap_version` (builds the image only; catalog commit runs on tag push).
 
 **Publishing a version locally** (without CI):
 
