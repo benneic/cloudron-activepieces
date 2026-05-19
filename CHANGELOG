@@ -1,3 +1,6 @@
+[0.83.0]
+* Bump [Activepieces 0.83.0](https://github.com/activepieces/activepieces/releases/tag/0.83.0).
+
 [0.82.1]
 * Initial public packaging for Cloudron: PostgreSQL (vector), Redis, localstorage, sendmail addons; `start.sh` maps `CLOUDRON_*` to Activepieces env; upstream 0.82.1.
 * Health check: `GET /api/v1/health`.
