@@ -19,6 +19,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          # Avoid duplicate Authorization on git https (checkout + create-pull-request) → 400
+          persist-credentials: false
 
       - name: Get latest Activepieces version
         id: meta
