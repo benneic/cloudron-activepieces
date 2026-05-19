@@ -91,7 +91,7 @@ jobs:
 
       - name: Open pull request
         if: steps.want.outputs.should_bump == '1' && steps.dupe.outputs.open_count == '0'
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "chore: bump Activepieces to ${{ steps.meta.outputs.upstream }}"

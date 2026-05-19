@@ -97,7 +97,7 @@ jobs:
 
       - name: Open PR with catalog only
         if: github.event_name == 'push'
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v8
         with:
           # Needs repo Actions → General → workflow permissions: allow creating PRs (and
           # read/write token default). Optional CATALOG_PR_TOKEN (classic `repo` PAT) if
