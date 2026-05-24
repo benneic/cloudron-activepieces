@@ -9,6 +9,7 @@ echo "Checking runtime CLIs in ${IMAGE}..."
 
 docker run --rm "${IMAGE}" sh -c '
   set -e
+  export PATH="/usr/bin:/usr/local/bin:/bin:/usr/sbin:/sbin"
   for cmd in pm2 pm2-runtime esbuild bun npm npx tsc tsserver node-gyp; do
     command -v "$cmd" >/dev/null
   done
