@@ -10,6 +10,9 @@ UPSTREAM="ghcr.io/activepieces/activepieces:${AP_VERSION}"
 
 echo "Checking ${IMAGE} against upstream ${UPSTREAM}..."
 
+docker pull "${UPSTREAM}" >/dev/null
+docker pull "${IMAGE}" >/dev/null
+
 UPSTREAM_BINS=$(
   docker run --rm "${UPSTREAM}" sh -c '
     for f in /usr/local/bin/*; do
@@ -19,26 +22,21 @@ UPSTREAM_BINS=$(
     done' | sort -u
 )
 
-MISSING=0
+CHECK_SCRIPT=$(
+  cat <<'EOS'
+set -e
+pm2-runtime --version >/dev/null
+esbuild --version >/dev/null
+bun --version >/dev/null
+node -v | grep -q "^v24"
+EOS
+)
+
 while IFS= read -r bin; do
   [[ -z "${bin}" ]] && continue
-  if ! docker run --rm "${IMAGE}" sh -c "command -v '${bin}' >/dev/null"; then
-    echo "MISSING in Cloudron image: ${bin} (present in upstream /usr/local/bin)" >&2
-    MISSING=1
-  fi
+  CHECK_SCRIPT+="command -v '${bin}' >/dev/null || { echo 'MISSING: ${bin}' >&2; exit 1; }"$'\n'
 done <<< "${UPSTREAM_BINS}"
 
-docker run --rm "${IMAGE}" sh -c '
-  set -e
-  pm2-runtime --version >/dev/null
-  esbuild --version >/dev/null
-  bun --version >/dev/null
-  node -v | grep -q "^v24"
-'
-
-if [[ "${MISSING}" -ne 0 ]]; then
-  echo "Runtime CLI check failed. Ensure Dockerfile copies upstream /usr/local/lib/node_modules and /usr/local/bin (except node)." >&2
-  exit 1
-fi
+echo "${CHECK_SCRIPT}" | docker run --rm -i "${IMAGE}" sh -s
 
 echo "Runtime CLI check passed."
