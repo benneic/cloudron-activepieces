@@ -121,7 +121,7 @@ Useful flags:
 Fully automated release pipeline (no manual PRs or tags):
 
 1. **Upstream watch (weekly / manual)** — [upstream-watch.yml](.github/workflows/upstream-watch.yml) checks [activepieces/activepieces](https://github.com/activepieces/activepieces) for a newer semver. When found it commits the bump to `main`, pushes tag `vX.Y.Z`, and triggers the release build. If the bump is already on `main` but the tag is missing, it creates the tag only.
-2. **Release build (on tag `v*.*.*`)** — [build.yml](.github/workflows/build.yml) builds and pushes `ghcr.io/…/activepieces-cloudron:<ver>`, then commits the new entry to [CloudronVersions.json](CloudronVersions.json) on `main`.
+2. **Release build (on tag `v*.*.*`)** — [build.yml](.github/workflows/build.yml) builds and pushes `ghcr.io/…/activepieces-cloudron:<ver>`, runs [scripts/verify-image-tools.sh](scripts/verify-image-tools.sh) to ensure runtime CLIs (`pm2`, `esbuild`, `bun`, …) match the upstream image for that version, then commits the new entry to [CloudronVersions.json](CloudronVersions.json) on `main`.
 
 **Requirements:** In GitHub → Settings → Actions → General, set workflow permissions to **Read and write**. If `main` has branch protection, allow `github-actions[bot]` to bypass or push directly.
 
@@ -151,6 +151,7 @@ node scripts/publish-version.mjs 'YOUR_REGISTRY/activepieces:0.82.1'
 | DB / migrations | `cloudron exec --app <fqdn> -- bash -c 'psql "..."'` using addon vars from `printenv \| grep POSTGRES` |
 | pgvector errors | `CREATE EXTENSION vector` is run in `start.sh`; ensure the postgres addon is provisioned. |
 | `promisify(undefined)` / `file-compressor.ts` / `ERR_INVALID_ARG_TYPE` | The app must run on **Node 24+** (see `start.sh` `PATH` and the Dockerfile). `cloudron/base` ships Node 22 first on `PATH`; this package prepends the distro Node from NodeSource. Rebuild and update. |
+| Code step: `spawn esbuild ENOENT` / `Compilation Error` | Code steps need upstream global CLIs (**esbuild**, **bun**, etc.). The Dockerfile copies them from `ghcr.io/activepieces/activepieces:${AP_VERSION}`; rebuild and `cloudron update`. Stale failed artifacts under `/app/data/cache/.../codes/` are rewritten on the next run. |
 
 ## Smoke testing
 

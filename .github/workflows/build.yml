@@ -78,6 +78,11 @@ jobs:
             AP_VERSION=${{ steps.ver.outputs.ver }}
           tags: ${{ steps.im.outputs.name }}
 
+      - name: Verify runtime CLIs match upstream
+        run: |
+          chmod +x scripts/verify-image-tools.sh
+          scripts/verify-image-tools.sh "${{ steps.im.outputs.name }}" "${{ steps.ver.outputs.ver }}"
+
       - uses: actions/checkout@v6
         if: github.event_name == 'push'
         with:

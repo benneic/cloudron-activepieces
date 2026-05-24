@@ -26,9 +26,7 @@ RUN set -eux; \
   && node -e "if(+process.versions.node.split('.')[0]<24) process.exit(1)" \
   && rm -rf /var/lib/apt/lists/*
 
-# Bun (used by some upstream tooling) — keep binary from upstream image
-COPY --from=upstream /usr/local/bin/bun /usr/local/bin/bun
-RUN chmod +x /usr/local/bin/bun
+# Bun and other global CLIs are copied from upstream below (after /usr/local/lib/node_modules).
 
 # Upstream isolates user code; config used when execution is sandboxed
 COPY --from=upstream /usr/local/etc/isolate /usr/local/etc/isolate
@@ -45,8 +43,19 @@ RUN set -eux; \
   mkdir -p /app/data/cache; \
   ln -s /app/data/cache /usr/src/app/cache
 
-RUN export PATH="/usr/bin:/usr/local/bin:${PATH}" && node -v && which npm && \
-  npm install -g --no-fund --no-audit pm2@6.0.10
+# Upstream base image installs global npm CLIs (pm2, esbuild, node-gyp, …). Copy them from the
+# upstream image so versions track AP_VERSION instead of duplicating pinned installs here.
+COPY --from=upstream /usr/local/lib/node_modules/ /usr/local/lib/node_modules/
+RUN --mount=from=upstream,source=/usr/local/bin,target=/upstream-bin,ro \
+  set -eux; \
+  for f in /upstream-bin/*; do \
+    name=$(basename "$f"); \
+    case "$name" in node|nodejs) continue ;; esac; \
+    cp -a "$f" "/usr/local/bin/$name"; \
+  done; \
+  command -v pm2-runtime; \
+  command -v esbuild; \
+  command -v bun
 
 RUN mkdir -p /app/code
 
