@@ -114,26 +114,13 @@ Useful flags:
 - Cloudron [backups](https://docs.cloudron.io/backups/) include the PostgreSQL and Redis **addons** and the **local storage** volume, so your DB, queue state, and `/app/data` stay consistent with restores.
 - If you installed from the community catalog URL, update from the Cloudron dashboard once a newer catalog version is available.
 - For **rebuilding and shipping a new version of this package**, use the [Install / Update](#install) flow (`git pull`, `cloudron build --no-push`, `cloudron update`) after you have aligned `Dockerfile` and `CloudronManifest.json` with the Activepieces version you want.
-- Optional: this repo also includes [GitHub Actions](.github/workflows/) for catalog publishing (`CloudronVersions.json` + registry images) if you prefer that model instead of a local `cloudron build` workflow.
+- Catalog publishing and registry images are handled by [upstream-watch.yml](.github/workflows/upstream-watch.yml) (see [Automation](#automation-in-this-repo)); use a local `cloudron build` only when you need to test packaging changes before they land on `main`.
 
 ## Automation in this repo
 
-Fully automated release pipeline (no manual PRs or tags):
-
-1. **Upstream watch (weekly / manual)** — [upstream-watch.yml](.github/workflows/upstream-watch.yml) checks [activepieces/activepieces](https://github.com/activepieces/activepieces) for a newer semver. When needed it bumps `main`, builds and pushes `ghcr.io/…/activepieces-cloudron:<ver>`, runs [scripts/verify-image-tools.sh](scripts/verify-image-tools.sh), commits the new entry to [CloudronVersions.json](CloudronVersions.json), and pushes tag `vX.Y.Z`. If `main` already matches upstream but the catalog entry is missing, it builds and publishes without re-bumping.
-2. **Release build (manual)** — [build.yml](.github/workflows/build.yml) is for hand-cut tags or **Actions → Release build → Run workflow**. Tag pushes and `workflow_dispatch` still build and (for tag pushes) update the catalog; the weekly upstream pipeline does not depend on a second workflow run.
+[upstream-watch.yml](.github/workflows/upstream-watch.yml) checks [activepieces/activepieces](https://github.com/activepieces/activepieces) for a newer semver every Monday (06:00 UTC), or on demand via **Actions → Upstream release watch → Run workflow**. When needed it bumps `main`, builds and pushes `ghcr.io/…/activepieces-cloudron:<ver>`, runs [scripts/verify-image-tools.sh](scripts/verify-image-tools.sh), commits the new entry to [CloudronVersions.json](CloudronVersions.json), and pushes tag `vX.Y.Z`. If `main` already matches upstream but the catalog entry is missing, it builds and publishes without re-bumping.
 
 **Requirements:** In GitHub → Settings → Actions → General, set workflow permissions to **Read and write**. If `main` has branch protection, allow `github-actions[bot]` to bypass or push directly.
-
-**Manual release** (without waiting for upstream watch):
-
-```bash
-# After aligning Dockerfile + CloudronManifest.json on main:
-git tag -a vX.Y.Z -m "Release Activepieces X.Y.Z for Cloudron"
-git push origin vX.Y.Z
-```
-
-Or use **Actions → Release build → Run workflow** with an `ap_version` (builds the image only; catalog commit runs on tag push).
 
 **Publishing a version locally** (without CI):
 

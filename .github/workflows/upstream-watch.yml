@@ -193,6 +193,10 @@ jobs:
           chmod +x scripts/verify-image-tools.sh
           scripts/verify-image-tools.sh "${{ steps.im.outputs.name }}"
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
       - name: Publish catalog on main
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
