@@ -1,4 +1,4 @@
-# On tag vX.Y.Z: build, push the image, append CloudronVersions.json on main.
+# Manual releases: on tag vX.Y.Z or workflow_dispatch. Automated upstream releases use upstream-watch.yml.
 name: Release build
 
 on:
