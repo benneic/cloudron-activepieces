@@ -136,6 +136,52 @@
             "creationDate": "Mon, 06 Jul 2026 10:55:14 GMT",
             "ts": "Mon, 06 Jul 2026 10:55:14 GMT",
             "publishState": "published"
+        },
+        "0.86.2": {
+            "manifest": {
+                "id": "com.activepieces.cloudronapp",
+                "title": "Activepieces",
+                "author": "Activepieces (upstream) <hello@activepieces.com>",
+                "tagline": "Open source workflow automation — packaged for Cloudron",
+                "version": "0.86.2",
+                "upstreamVersion": "0.86.2",
+                "description": "# Activepieces for Cloudron\n\n[Activepieces](https://www.activepieces.com/) is an open source workflow automation platform: connect apps, run scheduled or event-driven automations, and use AI pieces with a visual builder. This package runs the **Community Edition** in a single Cloudron app container.\n\n**What you get**\n\n- **Managed data**: Cloudron [PostgreSQL](https://docs.cloudron.io/packaging/addons/) (with the `vector` extension for AI features), [Redis](https://docs.cloudron.io/packaging/addons/) for the job queue, and [local storage](https://docs.cloudron.io/packaging/addons/) for cache and app-owned files on disk.\n- **Email**: optional [Sendmail](https://docs.cloudron.io/packaging/addons/) addon for outbound SMTP (password reset, invites), mapped to Activepieces’ SMTP settings.\n- **Sensible defaults**: one process runs both the API and the worker (`WORKER_AND_APP`); public URL and database URLs are read from Cloudron on every start.\n\n**Relationship to upstream**\n\nThis is *unofficial* packaging. The application code is built from the upstream [activepieces/activepieces](https://github.com/activepieces/activepieces) image; this repository only adds a Cloudron base image, startup script, and manifest. Report product bugs to Activepieces; report packaging issues to this repo’s issue tracker.\n\n**Licensing**\n\nActivepieces Community Edition is [MIT](https://github.com/activepieces/activepieces/blob/main/LICENSE). Check upstream for enterprise / commercial features.\n",
+                "changelog": "* Bump [Activepieces 0.86.2](https://github.com/activepieces/activepieces/releases/tag/0.86.2).\n",
+                "postInstallMessage": "<nosso>\n## First steps\n\n1. Open your app URL in a browser. **The first user to sign up becomes the platform admin.**\n2. Use **Platform settings** to configure email (if you did not enable the Sendmail addon, set SMTP there or via environment variables on the app).\n3. For enterprise SSO (SAML, etc.), see the [Activepieces admin docs](https://www.activepieces.com/docs/admin-guide).\n\n## Data\n\n- Database and Redis are managed by Cloudron and included in app backups.\n- The **local storage** directory holds cache and generated secrets; keep backups enabled for this app.\n\n## Docs\n\n- Application: <https://www.activepieces.com/docs>\n- This package: see the project **README** on the repository.\n</nosso>\n",
+                "icon": "file://icon.png",
+                "iconUrl": "https://avatars.githubusercontent.com/u/99494700?s=256&v=4",
+                "website": "https://www.activepieces.com/",
+                "documentationUrl": "https://www.activepieces.com/docs",
+                "contactEmail": "change-me@example.com",
+                "configurePath": "/",
+                "packagerName": "Activepieces (Cloudron package) by @benneic",
+                "packagerUrl": "https://github.com/benneic/cloudron-activepieces",
+                "tags": [
+                    "project",
+                    "sync",
+                    "hosting"
+                ],
+                "mediaLinks": [
+                    "https://raw.githubusercontent.com/benneic/cloudron-activepieces/main/assets/activepieces-screen-shot-1.png",
+                    "https://raw.githubusercontent.com/benneic/cloudron-activepieces/main/assets/activepieces-screen-shot-2.png",
+                    "https://raw.githubusercontent.com/benneic/cloudron-activepieces/main/assets/activepieces-screen-shot-3.png"
+                ],
+                "healthCheckPath": "/api/v1/health",
+                "httpPort": 8000,
+                "minBoxVersion": "9.1.0",
+                "memoryLimit": 2147483648,
+                "manifestVersion": 2,
+                "addons": {
+                    "localstorage": {},
+                    "postgresql": {},
+                    "redis": {},
+                    "sendmail": {}
+                },
+                "dockerImage": "ghcr.io/benneic/activepieces-cloudron:0.86.2"
+            },
+            "creationDate": "Mon, 13 Jul 2026 09:43:09 GMT",
+            "ts": "Mon, 13 Jul 2026 09:43:09 GMT",
+            "publishState": "published"
         }
     }
 }
