@@ -1,11 +1,11 @@
 # Cloudron image: reuse upstream published image for /usr/src/app + isolate config.
 # Final stage must use cloudron/base per https://docs.cloudron.io/packaging/guidelines/
 
-ARG AP_VERSION=0.86.2
+ARG AP_VERSION=0.86.3
 FROM ghcr.io/activepieces/activepieces:${AP_VERSION} AS upstream
 
 FROM cloudron/base:5.0.0@sha256:04fd70dbd8ad6149c19de39e35718e024417c3e01dc9c6637eaf4a41ec4e596c
-ARG AP_VERSION=0.86.2
+ARG AP_VERSION=0.86.3
 
 LABEL org.opencontainers.image.title="Activepieces (Cloudron)"
 LABEL org.opencontainers.image.version="${AP_VERSION}"
