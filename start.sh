@@ -7,11 +7,8 @@ set -euo pipefail
 export PATH="/usr/bin:/usr/local/bin:/bin:/usr/sbin:/sbin${PATH:+:$PATH}"
 
 # Writable paths (localstorage; Cloudron base convention)
-# PM2 defaults to ~/.pm2; /home is read-only in Cloudron app containers, so the process
-# would crash with EROFS and nothing listens on httpPort (health check -> ECONNREFUSED).
-export PM2_HOME="${PM2_HOME:-/run/pm2}"
-mkdir -p /app/data/cache /app/data/config /run/activepieces "$PM2_HOME"
-chown -R cloudron:cloudron /app/data /run/activepieces "$PM2_HOME"
+mkdir -p /app/data/cache /app/data/config /run/activepieces
+chown -R cloudron:cloudron /app/data /run/activepieces
 
 # Public URL: Cloudron provides origin for redirects and webhooks
 if [ -n "${CLOUDRON_APP_ORIGIN:-}" ]; then

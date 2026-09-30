@@ -135,9 +135,12 @@ jobs:
 
   release:
     needs: [plan, bump]
+    # !cancelled() is required: without a status function, a skipped `bump` skips this job too.
     if: |
-      needs.plan.outputs.action == 'release' ||
-      (needs.plan.outputs.action == 'bump' && needs.bump.result == 'success')
+      !cancelled() && (
+        needs.plan.outputs.action == 'release' ||
+        (needs.plan.outputs.action == 'bump' && needs.bump.result == 'success')
+      )
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -191,7 +194,8 @@ jobs:
       - name: Verify runtime CLIs match upstream
         run: |
           chmod +x scripts/verify-image-tools.sh
-          scripts/verify-image-tools.sh "${{ steps.im.outputs.name }}"
+          scripts/verify-image-tools.sh "${{ steps.im.outputs.name }}" \
+            "ghcr.io/activepieces/activepieces:${{ needs.plan.outputs.version }}"
 
       - uses: actions/setup-node@v4
         with:
@@ -236,3 +240,29 @@ jobs:
           fi
           git tag -a "v${U}" -m "Release Activepieces ${U} for Cloudron"
           git push origin "v${U}"
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -eux
+          U="${{ needs.plan.outputs.version }}"
+          if gh release view "v${U}" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1; then
+            echo "Release v${U} already exists"
+            exit 0
+          fi
+          gh release create "v${U}" --repo "${GITHUB_REPOSITORY}" --verify-tag --latest \
+            --title "v${U}" \
+            --notes "Activepieces ${U} packaged for Cloudron. Upstream release notes: ${{ needs.plan.outputs.relurl }}"
+
+  # GitHub disables scheduled workflows after 60 days without repository activity;
+  # re-enabling via the API on every run resets that timer.
+  keepalive:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - name: Keep scheduled workflow enabled
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh api -X PUT "repos/${GITHUB_REPOSITORY}/actions/workflows/upstream-watch.yml/enable"

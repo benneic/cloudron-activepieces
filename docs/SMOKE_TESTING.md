@@ -27,7 +27,7 @@ or from a [CloudronVersions.json](../CloudronVersions.json) URL you host.
    ```bash
    cloudron logs --app <fqdn> -l 200
    ```
-   — look for `Starting Activepieces with PM2` and no unhandled TypeORM/Redis connection errors.
+   — look for `Starting Activepieces (WORKER_AND_APP mode)` and no unhandled TypeORM/Redis connection errors.
 6. **pgvector** (if you use AI pieces): `cloudron exec` + `psql` and `\dx` on the app database should list `vector`.
 7. **Backup/restore (optional)**: from the Cloudron UI or CLI, run a one-off **Backup**, then test **Restore** on a clone or staging app to ensure PostgreSQL, Redis, and local storage are consistent (follow Cloudron’s restore docs for your version).
 

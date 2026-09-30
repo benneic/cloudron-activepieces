@@ -118,7 +118,7 @@ Useful flags:
 
 ## Automation in this repo
 
-[upstream-watch.yml](.github/workflows/upstream-watch.yml) checks [activepieces/activepieces](https://github.com/activepieces/activepieces) for a newer semver every Monday (06:00 UTC), or on demand via **Actions → Upstream release watch → Run workflow**. When needed it bumps `main`, builds and pushes `ghcr.io/…/activepieces-cloudron:<ver>`, runs [scripts/verify-image-tools.sh](scripts/verify-image-tools.sh), commits the new entry to [CloudronVersions.json](CloudronVersions.json), and pushes tag `vX.Y.Z`. If `main` already matches upstream but the catalog entry is missing, it builds and publishes without re-bumping.
+[upstream-watch.yml](.github/workflows/upstream-watch.yml) checks [activepieces/activepieces](https://github.com/activepieces/activepieces) for a newer semver every Monday (06:00 UTC), or on demand via **Actions → Upstream release watch → Run workflow**. When needed it bumps `main`, builds and pushes `ghcr.io/…/activepieces-cloudron:<ver>`, runs [scripts/verify-image-tools.sh](scripts/verify-image-tools.sh), commits the new entry to [CloudronVersions.json](CloudronVersions.json), pushes tag `vX.Y.Z`, and creates a matching GitHub Release. If `main` already matches upstream but the catalog entry is missing (for example after a failed build), it builds and publishes without re-bumping. Each run also re-enables the workflow so GitHub does not auto-disable the schedule after 60 days of inactivity.
 
 **Requirements:** In GitHub → Settings → Actions → General, set workflow permissions to **Read and write**. If `main` has branch protection, allow `github-actions[bot]` to bypass or push directly.
 

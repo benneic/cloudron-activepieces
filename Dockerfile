@@ -43,8 +43,8 @@ RUN set -eux; \
   mkdir -p /app/data/cache; \
   ln -s /app/data/cache /usr/src/app/cache
 
-# Upstream base image installs global npm CLIs (pm2, esbuild, node-gyp, …). Copy them from the
-# upstream image so versions track AP_VERSION instead of duplicating pinned installs here.
+# Upstream base image installs global CLIs (esbuild, bun, node-gyp, …); the set changes between
+# releases. Copy whatever upstream ships so versions track AP_VERSION instead of pinning here.
 COPY --from=upstream /usr/local/lib/node_modules/ /usr/local/lib/node_modules/
 RUN --mount=from=upstream,source=/usr/local/bin,target=/upstream-bin,ro \
   set -eux; \
@@ -53,7 +53,6 @@ RUN --mount=from=upstream,source=/usr/local/bin,target=/upstream-bin,ro \
     case "$name" in node|nodejs) continue ;; esac; \
     cp -a "$f" "/usr/local/bin/$name"; \
   done; \
-  command -v pm2-runtime; \
   command -v esbuild; \
   command -v bun
 
